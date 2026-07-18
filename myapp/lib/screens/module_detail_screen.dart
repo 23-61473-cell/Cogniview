@@ -1,7 +1,8 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../core/theme/app_theme.dart';
+import '../core/utils/module_image_helper.dart';
 import '../providers/dashboard_provider.dart';
 
 class ModuleDetailScreen extends StatelessWidget {
@@ -48,7 +49,7 @@ class ModuleDetailScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // 3D Brain Model Image Card with overlays
+              // ── Dynamic banner image ─────────────────────────────────
               Container(
                 height: 300,
                 decoration: BoxDecoration(
@@ -68,20 +69,31 @@ class ModuleDetailScreen extends StatelessWidget {
                 ),
                 child: Stack(
                   children: [
-                    // The Front Lobe Image
+                    // Module-specific image (auto-resolved from module.id)
                     ClipRRect(
                       borderRadius: BorderRadius.circular(26),
                       child: Image.asset(
-                        'assets/frontlobe.jpg',
+                        ModuleImageHelper.assetPath(module.id),
                         width: double.infinity,
                         height: double.infinity,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) {
+                          // Fallback: gradient + icon when no image found
                           return Container(
-                            color: AppTheme.primaryColor.withValues(alpha: 0.05),
-                            child: const Center(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(26),
+                              gradient: LinearGradient(
+                                colors: [
+                                  AppTheme.primaryColor.withValues(alpha: 0.12),
+                                  AppTheme.darkGreen.withValues(alpha: 0.07),
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                            ),
+                            child: Center(
                               child: Icon(
-                                Icons.psychology_rounded,
+                                module.icon,
                                 size: 80,
                                 color: AppTheme.darkGreen,
                               ),
@@ -90,41 +102,70 @@ class ModuleDetailScreen extends StatelessWidget {
                         },
                       ),
                     ),
-                    
-                    // Frontal Lobe label overlay
+
+                    // Bottom gradient for overlay legibility
                     Positioned(
-                      top: 40,
-                      left: 40,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: AppTheme.primaryColor,
-                          borderRadius: BorderRadius.circular(20),
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      child: ClipRRect(
+                        borderRadius: const BorderRadius.only(
+                          bottomLeft: Radius.circular(26),
+                          bottomRight: Radius.circular(26),
                         ),
-                        child: const Text(
-                          'FRONTAL LOBE',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
+                        child: Container(
+                          height: 110,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.transparent,
+                                Colors.black.withValues(alpha: 0.52),
+                              ],
+                            ),
                           ),
                         ),
                       ),
                     ),
 
-                    // Cerebellum label overlay
+                    // Module title chip (bottom-left)
                     Positioned(
-                      bottom: 80,
-                      right: 40,
+                      bottom: 16,
+                      left: 16,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryColor,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          module.title.toUpperCase(),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // Progress badge (bottom-right)
+                    Positioned(
+                      bottom: 16,
+                      right: 16,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 6),
                         decoration: BoxDecoration(
                           color: AppTheme.darkGreen,
                           borderRadius: BorderRadius.circular(20),
                         ),
-                        child: const Text(
-                          'CEREBELLUM',
-                          style: TextStyle(
+                        child: Text(
+                          '${(module.progress * 100).toInt()}% COMPLETE',
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
@@ -137,7 +178,7 @@ class ModuleDetailScreen extends StatelessWidget {
               ),
               const SizedBox(height: 24),
 
-              // Frontal Lobe Info Card
+              // ── Module info card ─────────────────────────────────────
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
@@ -154,13 +195,14 @@ class ModuleDetailScreen extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Row(
+                        Row(
                           children: [
-                            Icon(Icons.spa_rounded, color: AppTheme.primaryColor, size: 20),
-                            SizedBox(width: 8),
+                            Icon(module.icon,
+                                color: AppTheme.primaryColor, size: 20),
+                            const SizedBox(width: 8),
                             Text(
-                              'Frontal Lobe',
-                              style: TextStyle(
+                              module.title,
+                              style: const TextStyle(
                                 color: AppTheme.darkGreen,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
@@ -169,9 +211,11 @@ class ModuleDetailScreen extends StatelessWidget {
                           ],
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: AppTheme.primaryColor.withValues(alpha: 0.12),
+                            color:
+                                AppTheme.primaryColor.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: const Text(
@@ -185,34 +229,52 @@ class ModuleDetailScreen extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 6),
-                    const Text(
-                      'REASONING & MOTOR CONTROL',
-                      style: TextStyle(
-                        color: AppTheme.primaryColor,
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
                     const SizedBox(height: 12),
                     Text(
-                      'The frontal lobe is responsible for complex cognitive behavior, personality expression, and moderating social behavior.',
+                      module.description,
                       style: TextStyle(
                         color: Colors.grey[700],
                         fontSize: 13,
-                        height: 1.5,
+                        height: 1.55,
                       ),
+                    ),
+                    const SizedBox(height: 16),
+                    // Progress bar
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: LinearProgressIndicator(
+                              value: module.progress,
+                              minHeight: 7,
+                              backgroundColor:
+                                  AppTheme.primaryColor.withValues(alpha: 0.1),
+                              valueColor:
+                                  const AlwaysStoppedAnimation<Color>(
+                                      AppTheme.primaryColor),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          '${(module.progress * 100).toInt()}%',
+                          style: const TextStyle(
+                            color: AppTheme.darkGreen,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ),
               const SizedBox(height: 28),
 
-              // "Take Quiz" Action Button
+              // ── Take Quiz button ────────────────────────────────────
               ElevatedButton.icon(
                 onPressed: () {
-                  // Initialize the quiz for this module and switch to the Quiz Tab (index 3)
                   provider.startQuizForModule(module.id);
                   context.go('/');
                 },
