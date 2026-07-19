@@ -92,7 +92,7 @@ class HomeTab extends StatelessWidget {
                     ElevatedButton(
                       onPressed: () {
                         provider.selectModule(continueModule.id);
-                        context.push('/module-detail');
+                        context.push('/module-details/${continueModule.id}');
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primaryColor,
@@ -136,7 +136,7 @@ class HomeTab extends StatelessWidget {
                   module: module,
                   onTap: () {
                     provider.selectModule(module.id);
-                    context.push('/module-detail');
+                    context.push('/module-details/${module.id}');
                   },
                 );
               },

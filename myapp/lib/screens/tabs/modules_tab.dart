@@ -44,7 +44,7 @@ class ModulesTab extends StatelessWidget {
                   module: module,
                   onTap: () {
                     provider.selectModule(module.id);
-                    context.push('/module-detail');
+                    context.push('/module-details/${module.id}');
                   },
                 );
               },

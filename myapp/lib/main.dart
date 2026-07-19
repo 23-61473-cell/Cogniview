@@ -6,7 +6,7 @@ import 'providers/dashboard_provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/notification_provider.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
 }
