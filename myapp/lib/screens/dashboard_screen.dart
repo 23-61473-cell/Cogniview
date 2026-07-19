@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import '../core/theme/app_theme.dart';
 import '../providers/dashboard_provider.dart';
 import 'tabs/home_tab.dart';
 import 'tabs/modules_tab.dart';
 import 'tabs/placeholder_tab.dart';
 import 'tabs/quiz_tab.dart';
+import '../providers/notification_provider.dart';
 import 'tabs/profile_tab.dart';
 
 class DashboardScreen extends StatelessWidget {
@@ -14,6 +16,7 @@ class DashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<DashboardProvider>(context);
+    final notificationProvider = Provider.of<NotificationProvider>(context);
 
     // List of screens corresponding to navigation index
     final List<Widget> tabs = [
@@ -66,8 +69,40 @@ class DashboardScreen extends StatelessWidget {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications_none_rounded, color: AppTheme.darkGreen),
-            onPressed: () {},
+            icon: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                const Icon(Icons.notifications_none_rounded, color: AppTheme.darkGreen, size: 26),
+                if (notificationProvider.unreadCount > 0)
+                  Positioned(
+                    right: -2,
+                    top: -2,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: const BoxDecoration(
+                        color: Colors.redAccent,
+                        shape: BoxShape.circle,
+                      ),
+                      constraints: const BoxConstraints(
+                        minWidth: 16,
+                        minHeight: 16,
+                      ),
+                      child: Text(
+                        '${notificationProvider.unreadCount}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            onPressed: () {
+              context.push('/notifications');
+            },
           ),
           const SizedBox(width: 8),
           CircleAvatar(

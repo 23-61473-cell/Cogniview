@@ -10,6 +10,7 @@ import '../../widgets/module_card.dart';
 class HomeTab extends StatelessWidget {
   const HomeTab({super.key});
 
+
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<DashboardProvider>(context);
@@ -23,6 +24,7 @@ class HomeTab extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+
             const WelcomeCard(),
             const SizedBox(height: 20),
             ProgressCard(progress: provider.overallProgress),

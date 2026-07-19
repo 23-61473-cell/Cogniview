@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
@@ -7,9 +8,64 @@ import '../../providers/auth_provider.dart';
 class ProfileTab extends StatelessWidget {
   const ProfileTab({super.key});
 
+  void _showLogoutDialog(BuildContext context, AuthProvider authProvider) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: const Text(
+            'Logout',
+            style: TextStyle(
+              color: AppTheme.darkGreen,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: const Text('Are you sure you want to logout?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(color: Colors.grey),
+              ),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.pop(context); // Close dialog
+                await authProvider.logout();
+                if (context.mounted) {
+                  // go router clear history
+                  context.go('/welcome');
+                }
+              },
+              child: const Text(
+                'Logout',
+                style: TextStyle(
+                  color: Colors.redAccent,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
+    final profile = authProvider.profile;
+
+    final name = profile != null ? '${profile.firstName} ${profile.lastName}'.trim() : 'Alex Rivera';
+    final studentId = profile?.studentId ?? '21-04532';
+    final email = profile?.email ?? 'a.rivera@g.batstate-u.edu.ph';
+    final department = profile?.department ?? 'Psychology';
+    final yearSection = profile != null ? '${profile.yearLevel} - ${profile.section}' : '2nd Year - Section A';
+    final avatar = profile?.profilePicture ?? 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=200';
 
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
@@ -18,35 +74,20 @@ class ProfileTab extends StatelessWidget {
         child: Column(
           children: [
             // Avatar and Name
-            Stack(
-              alignment: Alignment.bottomRight,
-              children: [
-                CircleAvatar(
-                  radius: 54,
-                  backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.15),
-                  child: const CircleAvatar(
-                    radius: 50,
-                    backgroundImage: NetworkImage('https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=200'),
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: const BoxDecoration(
-                    color: AppTheme.primaryColor,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.camera_alt_rounded,
-                    color: Colors.white,
-                    size: 16,
-                  ),
-                ),
-              ],
+            CircleAvatar(
+              radius: 54,
+              backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.15),
+              child: CircleAvatar(
+                radius: 50,
+                backgroundImage: avatar.startsWith('http')
+                    ? NetworkImage(avatar) as ImageProvider
+                    : FileImage(File(avatar)),
+              ),
             ),
             const SizedBox(height: 16),
-            const Text(
-              'Alex Rivera',
-              style: TextStyle(
+            Text(
+              name,
+              style: const TextStyle(
                 color: AppTheme.darkGreen,
                 fontWeight: FontWeight.bold,
                 fontSize: 22,
@@ -66,14 +107,14 @@ class ProfileTab extends StatelessWidget {
                 Icon(Icons.badge_outlined, size: 14, color: Colors.grey[500]),
                 const SizedBox(width: 4),
                 Text(
-                  '21-04532',
+                  studentId,
                   style: TextStyle(color: Colors.grey[500], fontSize: 13),
                 ),
                 const SizedBox(width: 16),
                 Icon(Icons.email_outlined, size: 14, color: Colors.grey[500]),
                 const SizedBox(width: 4),
                 Text(
-                  'a.rivera@g.batstate-u.edu.ph',
+                  email,
                   style: TextStyle(color: Colors.grey[500], fontSize: 13),
                 ),
               ],
@@ -109,14 +150,14 @@ class ProfileTab extends StatelessWidget {
                     context,
                     Icons.account_balance_rounded,
                     'Department',
-                    'College of Arts and Sciences',
+                    department,
                   ),
                   const SizedBox(height: 14),
                   _buildAcademicItem(
                     context,
                     Icons.school_rounded,
                     'Year Level',
-                    '3rd Year - Section A',
+                    yearSection,
                   ),
                 ],
               ),
@@ -138,13 +179,21 @@ class ProfileTab extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  _buildOptionItem(context, Icons.person_outline_rounded, 'Edit Profile'),
+                  _buildOptionItem(context, Icons.person_outline_rounded, 'Edit Profile', () {
+                    context.push('/edit-profile');
+                  }),
                   _buildDivider(),
-                  _buildOptionItem(context, Icons.lock_outline_rounded, 'Change Password'),
+                  _buildOptionItem(context, Icons.lock_outline_rounded, 'Change Password', () {
+                    context.push('/change-password');
+                  }),
                   _buildDivider(),
-                  _buildOptionItem(context, Icons.notifications_none_rounded, 'Notification Settings'),
+                  _buildOptionItem(context, Icons.notifications_none_rounded, 'Notification Settings', () {
+                    context.push('/notification-settings');
+                  }),
                   _buildDivider(),
-                  _buildOptionItem(context, Icons.help_outline_rounded, 'Help & Support'),
+                  _buildOptionItem(context, Icons.help_outline_rounded, 'Help & Support', () {
+                    context.push('/help-support');
+                  }),
                 ],
               ),
             ),
@@ -152,12 +201,7 @@ class ProfileTab extends StatelessWidget {
 
             // Red Logout Button
             ListTile(
-              onTap: () async {
-                await authProvider.logout();
-                if (context.mounted) {
-                  context.go('/welcome');
-                }
-              },
+              onTap: () => _showLogoutDialog(context, authProvider),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
@@ -226,7 +270,7 @@ class ProfileTab extends StatelessWidget {
     );
   }
 
-  Widget _buildOptionItem(BuildContext context, IconData icon, String title) {
+  Widget _buildOptionItem(BuildContext context, IconData icon, String title, VoidCallback onTap) {
     return ListTile(
       leading: Icon(icon, color: AppTheme.darkGreen),
       title: Text(
@@ -241,7 +285,7 @@ class ProfileTab extends StatelessWidget {
         Icons.chevron_right_rounded,
         color: Colors.grey[400],
       ),
-      onTap: () {},
+      onTap: onTap,
     );
   }
 

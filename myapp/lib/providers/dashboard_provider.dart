@@ -121,6 +121,12 @@ class DashboardProvider extends ChangeNotifier {
   int? _selectedAnswerIndex;
   int? get selectedAnswerIndex => _selectedAnswerIndex;
 
+  List<int?> _userAnswers = List.filled(10, null);
+  List<int?> get userAnswers => _userAnswers;
+
+  bool _isQuizFinished = false;
+  bool get isQuizFinished => _isQuizFinished;
+
   final List<QuizQuestion> _quizQuestions = [
     const QuizQuestion(
       questionText: 'Which lobe of the brain is primary responsible for processing auditory signals and speech comprehension?',
@@ -180,6 +186,7 @@ class DashboardProvider extends ChangeNotifier {
 
   void selectAnswer(int index) {
     _selectedAnswerIndex = index;
+    _userAnswers[_currentQuestionIndex] = index;
     notifyListeners();
   }
 
@@ -188,17 +195,25 @@ class DashboardProvider extends ChangeNotifier {
       _currentQuestionIndex++;
       _selectedAnswerIndex = null;
     } else {
-      // Quiz finished, reset or loop
-      _currentQuestionIndex = 0;
-      _selectedAnswerIndex = null;
+      _isQuizFinished = true;
     }
+    notifyListeners();
+  }
+
+  void resetQuiz() {
+    _currentQuestionIndex = 0;
+    _selectedAnswerIndex = null;
+    _isQuizFinished = false;
+    _userAnswers = List.filled(_quizQuestions.length, null);
     notifyListeners();
   }
 
   void startQuizForModule(String moduleId) {
     _selectedModuleId = moduleId;
-    _currentQuestionIndex = 0; // Start at beginning or 3 to show demo
+    _currentQuestionIndex = 0;
     _selectedAnswerIndex = null;
+    _isQuizFinished = false;
+    _userAnswers = List.filled(_quizQuestions.length, null);
     _currentTabIndex = 3; // Switch to the Quiz tab (index 3)
     notifyListeners();
   }

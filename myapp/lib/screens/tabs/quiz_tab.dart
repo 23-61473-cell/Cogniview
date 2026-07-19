@@ -9,6 +9,11 @@ class QuizTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<DashboardProvider>(context);
+
+    if (provider.isQuizFinished) {
+      return _buildResultsView(context, provider);
+    }
+
     final question = provider.currentQuestion;
     final questionsCount = provider.quizQuestions.length;
     final questionNumber = provider.currentQuestionIndex + 1;
@@ -138,23 +143,16 @@ class QuizTab extends StatelessWidget {
             Column(
               children: List.generate(question.options.length, (index) {
                 final isSelected = provider.selectedAnswerIndex == index;
-                final isCorrect = question.correctOptionIndex == index;
                 final optionText = question.options[index];
 
                 Color borderColor = AppTheme.primaryColor.withValues(alpha: 0.15);
                 Color bgColor = Colors.white;
                 Color textColor = AppTheme.darkGreen;
-                Widget? suffixIcon;
 
                 if (isSelected) {
                   borderColor = AppTheme.primaryColor;
                   bgColor = AppTheme.primaryColor.withValues(alpha: 0.08);
                   textColor = AppTheme.darkGreen;
-                  if (isCorrect) {
-                    suffixIcon = const Icon(Icons.check_circle_rounded, color: AppTheme.primaryColor);
-                  } else {
-                    suffixIcon = const Icon(Icons.cancel_rounded, color: Colors.redAccent);
-                  }
                 }
 
                 return Padding(
@@ -196,7 +194,6 @@ class QuizTab extends StatelessWidget {
                               ),
                             ),
                           ),
-                          ?suffixIcon,
                         ],
                       ),
                     ),
@@ -224,6 +221,225 @@ class QuizTab extends StatelessWidget {
               ),
               child: const Text(
                 'Next Question',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildResultsView(BuildContext context, DashboardProvider provider) {
+    final questions = provider.quizQuestions;
+    final answers = provider.userAnswers;
+    final optionLabels = ['A', 'B', 'C', 'D'];
+
+    int correctCount = 0;
+    for (int i = 0; i < questions.length; i++) {
+      if (answers[i] == questions[i].correctOptionIndex) {
+        correctCount++;
+      }
+    }
+
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Results Summary Card
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [AppTheme.primaryColor, AppTheme.darkGreen],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTheme.darkGreen.withValues(alpha: 0.15),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  const Icon(
+                    Icons.emoji_events_rounded,
+                    color: AppTheme.accentColor,
+                    size: 64,
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Quiz Completed!',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Module: ${provider.selectedModule.title}',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.85),
+                      fontSize: 14,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    '$correctCount / ${questions.length}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 48,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const Text(
+                    'Correct Answers',
+                    style: TextStyle(
+                      color: AppTheme.accentColor,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 28),
+
+            // Review Details Header
+            const Text(
+              'Questions Review',
+              style: TextStyle(
+                color: AppTheme.darkGreen,
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Question review list
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: questions.length,
+              itemBuilder: (context, qIndex) {
+                final question = questions[qIndex];
+                final userAnswerIndex = answers[qIndex];
+                final isUserCorrect = userAnswerIndex == question.correctOptionIndex;
+
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: isUserCorrect
+                          ? AppTheme.primaryColor.withValues(alpha: 0.25)
+                          : Colors.redAccent.withValues(alpha: 0.2),
+                      width: 1.5,
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            isUserCorrect ? Icons.check_circle_rounded : Icons.cancel_rounded,
+                            color: isUserCorrect ? AppTheme.primaryColor : Colors.redAccent,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Question ${qIndex + 1}: ${question.questionText}',
+                              style: const TextStyle(
+                                color: AppTheme.darkGreen,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      // Options list with highlights
+                      ...List.generate(question.options.length, (oIndex) {
+                        final isCorrectOption = oIndex == question.correctOptionIndex;
+                        final isUserSelected = oIndex == userAnswerIndex;
+
+                        Color textColor = AppTheme.darkGreen;
+                        FontWeight fontWeight = FontWeight.normal;
+                        Widget? markerIcon;
+
+                        if (isCorrectOption) {
+                          textColor = AppTheme.primaryColor;
+                          fontWeight = FontWeight.bold;
+                          markerIcon = const Icon(Icons.check_rounded, color: AppTheme.primaryColor, size: 16);
+                        } else if (isUserSelected && !isUserCorrect) {
+                          textColor = Colors.redAccent;
+                          fontWeight = FontWeight.bold;
+                          markerIcon = const Icon(Icons.close_rounded, color: Colors.redAccent, size: 16);
+                        }
+
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 6),
+                          child: Row(
+                            children: [
+                              Text(
+                                '${optionLabels[oIndex]}.  ',
+                                style: TextStyle(
+                                  color: textColor,
+                                  fontWeight: fontWeight,
+                                  fontSize: 13,
+                                ),
+                              ),
+                              Expanded(
+                                child: Text(
+                                  question.options[oIndex],
+                                  style: TextStyle(
+                                    color: textColor,
+                                    fontWeight: fontWeight,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ),
+                              ?markerIcon,
+                            ],
+                          ),
+                        );
+                      }),
+                    ],
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 16),
+
+            // Restart Button
+            ElevatedButton(
+              onPressed: () => provider.resetQuiz(),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.darkGreen,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                elevation: 0,
+              ),
+              child: const Text(
+                'Restart Quiz',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
             ),
